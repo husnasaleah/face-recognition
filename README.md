@@ -11,5 +11,5 @@ pip install cvzone
 pip install deepface
 
 #รันไฟล์
-python ชื่อไฟล์.py
+python main.py
 
