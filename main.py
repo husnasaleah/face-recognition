@@ -72,10 +72,19 @@ while True:
         imgBgCopy[mode_y1:mode_y2, mode_x1:mode_x2] = imgModeList[0]
 
     gray_scale = cv2.cvtColor(imgBgCopy, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray_scale)
+    faces = face_cascade.detectMultiScale(gray_scale, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
-    if len(faces) > 0:
-        for (x, y, w, h) in faces:
+    # model
+    for (x, y, w, h) in faces:
+        face_img = imgBgCopy[y:y+h, x:x+w]
+        res = DeepFace.find(face_img, db_path="Resources/Images/", enforce_detection=False, model_name="VGG-Face")
+        objs = DeepFace.analyze(face_img, 
+            actions = ['emotion'],enforce_detection=False
+        )
+        if len(res[0]['identity']) > 0:
+            name = res[0]['identity'][0].split('/')[-1].split('.')[0]
+            emotion = objs[0]['dominant_emotion']
+
             offset = 20
             new_width = w + 2 * offset
             new_height = h + 2 * offset
@@ -92,12 +101,26 @@ while True:
 
             bbox = (x1, y1, x2 - x1, y2 - y1)
             imgBgCopy = cvzone.cornerRect(imgBgCopy, bbox, rt=0, t=10, l=60)
+            imgBgCopy, bbox = cvzone.putTextRect(
+                imgBgCopy, name, (x1, y1-50),  # Image and starting position of the rectangle
+                scale=3, thickness=3,  # Font scale and thickness
+                colorT=(255, 255, 255), colorR=(255, 0, 255),  # Text color and Rectangle color
+                font=cv2.FONT_HERSHEY_COMPLEX,  # Font type
+            )
+            imgBgCopy, bbox = cvzone.putTextRect(
+                imgBgCopy, emotion, (x1, y2+100),  # Image and starting position of the rectangle
+                scale=3, thickness=3,  # Font scale and thickness
+                colorT=(255, 255, 255), colorR=(255, 0, 255),  # Text color and Rectangle color
+                font=cv2.FONT_HERSHEY_COMPLEX,  # Font type
+            )
+
     cv2.imshow("Face Recognition", imgBgCopy)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-cap.release()
+cap.release()    
 cv2.destroyAllWindows()
+
 
 
